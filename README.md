@@ -32,4 +32,4 @@ Then it's Human A's turn again. Instead of adding a letter to the start or end, 
 Since Human A was proven wrong, they lose this game. This is just one way to end a round of `Wordn't`. It can also end when somebody challenges that the current substring is indeed a word.
 
 ## Wordn't Bot Writeup
-For a more comprehensive explanation of the rules of `Wordn't` theoretical underpinnings of the Super Agent, take a look at `wordn't writeup.pdf`
+For a more comprehensive explanation of the rules of `Wordn't` and the theory behind the Super Agent, take a look at `wordn't writeup.pdf`
