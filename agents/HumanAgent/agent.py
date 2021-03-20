@@ -40,6 +40,12 @@ class Agent:
         else:
             last_action_type = None
 
+        action_type = self._choose_action_type(last_action_type, current_string)
+        string_ = self._choose_string(action_type)
+            
+        return action_type, string_
+
+    def _choose_action_type(self, last_action_type, current_string):
         if last_action_type == "challenge_no_word":
             action_type = "claim_word"
         elif current_string == "":
@@ -57,7 +63,10 @@ class Agent:
                 if action_type is None:
                     print("Please enter a valid number")
             print(f"Chose {action_type}")
-            
+
+        return action_type
+
+    def _choose_string(self, action_type):
         if (action_type == "challenge_no_word") or (action_type == "challenge_is_word"):
             string_ = None
         elif action_type == "claim_word":
@@ -71,5 +80,5 @@ class Agent:
                     is_valid_letter = True
                 if not is_valid_letter:
                     print("Please enter a valid letter.")
-        
-        return action_type, string_
+
+        return string_
