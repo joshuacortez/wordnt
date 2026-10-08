@@ -79,32 +79,20 @@ class GameGraph:
     def get_children(self, string_id):
         return self.edge_child[self.child_start[string_id]:self.child_start[string_id + 1]]
 
-    def get_loss_probs(self, n_players, opponent_model = "random"):
+    def get_loss_probs(self, n_players):
         '''
         loss_probs[k, s] is the probability that you eventually lose from string s,
         when it will be your turn again after k more letters are added.
-        You play to minimize it, and opponents play according to opponent_model:
-            "random": every opponent adds a random letter that keeps the string valid
-            "careful": every opponent plays a random safe move (one where they can't be forced to lose) if they have one,
-                and a random valid move otherwise
+        You play to minimize it, and every opponent adds a random letter that keeps the string valid.
 
-        With the "random" model, loss_probs[k, s] == 0 means you can never be forced to lose,
-        even if all the other players team up against you.
+        loss_probs[k, s] == 0 means you can never be forced to lose, even if all the other players team up against you.
         For 2 players, this is exactly the set of winning positions under perfect play.
         '''
-        key = (n_players, opponent_model)
-        if key not in self._loss_probs:
-            if opponent_model == "random":
-                self._loss_probs[key] = self._solve(n_players)
-            elif opponent_model == "careful":
-                # a move is safe for whoever makes it if the random-model loss probability after it is 0
-                safe_moves = self.get_loss_probs(n_players, "random")[n_players - 1] == 0
-                self._loss_probs[key] = self._solve(n_players, safe_moves = safe_moves)
-            else:
-                raise ValueError("unknown opponent_model {}".format(opponent_model))
-        return self._loss_probs[key]
+        if n_players not in self._loss_probs:
+            self._loss_probs[n_players] = self._solve(n_players)
+        return self._loss_probs[n_players]
 
-    def _solve(self, n_players, safe_moves = None):
+    def _solve(self, n_players):
         n_strings = len(self.strings)
         loss_probs = np.zeros((n_players, n_strings))
         edge_parent_length = self.length[self.edge_parent]
@@ -130,16 +118,8 @@ class GameGraph:
             # after your move, it's your turn again after n_players - 1 more letters
             loss_probs[0, parent_ids] = np.minimum.reduceat(loss_probs[n_players - 1, layer_children], starts)
 
-            # an opponent's turn: they pick a random move among the moves they consider
-            if safe_moves is None:
-                weights = np.ones(len(layer_children))
-            else:
-                # careful opponents only consider their safe moves, if they have any
-                is_safe = safe_moves[layer_children].astype(float)
-                has_safe = np.add.reduceat(is_safe, starts) > 0
-                weights = np.where(np.repeat(has_safe, counts), is_safe, 1.0)
-            total_weights = np.add.reduceat(weights, starts)
+            # an opponent's turn: they pick a random valid move
             for k in range(1, n_players):
-                loss_probs[k, parent_ids] = np.add.reduceat(weights * loss_probs[k - 1, layer_children], starts) / total_weights
+                loss_probs[k, parent_ids] = np.add.reduceat(loss_probs[k - 1, layer_children], starts) / counts
 
         return loss_probs
