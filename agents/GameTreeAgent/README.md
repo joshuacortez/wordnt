@@ -10,9 +10,9 @@ Wordn't belongs to a family of games that game theory can solve completely:
 
 - **Perfect information.** Everyone sees the whole position (the current string). There are no hidden cards and no dice.
 - **Finite, with no cycles.** Every move makes the string one letter longer, and no word is longer than 15 letters, so the game always ends and a position can never repeat.
-- **One loser per game.** Every game ends with someone forming a word, getting cornered, or losing a challenge.
+- **One loser per game, and no draws.** Every game ends with exactly one loser: someone forms a word, builds a string that no word contains, or makes a wrong challenge.
 
-For two players, [Zermelo's theorem](https://en.wikipedia.org/wiki/Zermelo%27s_theorem_(game_theory)) says that in such a game one of the players has a strategy that wins no matter what the other does. You find it by **backward induction**: label the positions where the game ends, then work backwards one move at a time. Wordn't is a close relative of the word game [Superghost](https://en.wikipedia.org/wiki/Ghost_(game)#Variants), and this is the same technique used to analyse Ghost.
+For two players, [Zermelo's theorem](https://en.wikipedia.org/wiki/Zermelo%27s_theorem_(game_theory)) says that in such a game, since there are no draws, one of the players has a strategy that wins no matter what the other does. You find it by **backward induction**: label the positions where the game ends, then work backwards one move at a time. Wordn't is a close relative of the word game [Superghost](https://en.wikipedia.org/wiki/Ghost_(game)#Variants), and this is the same technique used to analyse Ghost.
 
 ## 2. Positions and moves
 
@@ -28,7 +28,7 @@ flowchart TD
     D -- no --> E["Challenge: no word can be formed"]
     D -- yes --> F{"Any valid move?"}
     F -- yes --> G["Add the letter with the lowest loss probability"]
-    F -- no --> H["Cornered: every move forms a word or leads nowhere.<br/>You lose against careful opponents, so the agent bluffs"]
+    F -- no --> H["Cornered: every move forms a word or leads nowhere.<br/>Any correct challenge beats you, so the agent bluffs"]
 ```
 
 A **valid move** adds a letter to the start or the end so that the new string is still part of some word, but is not a word itself. Anything else loses straight away to a correct challenge.
@@ -39,7 +39,7 @@ Every string that can appear in a game is a substring of some word. The agent bu
 
 ```mermaid
 flowchart LR
-    W["Word list<br/>276,519 words"] --> S["Every substring<br/>1,628,317 strings"]
+    W["Word list<br/>276,519 words"] --> S["Every substring<br/>1,628,316 strings"]
     S --> G["Game tree<br/>2,500,456 valid moves"]
     G --> P["Solve backwards<br/>once per player count"]
     P --> M["During the game:<br/>look up the best move"]
@@ -115,7 +115,7 @@ flowchart LR
 
 **Why $P = 0$ means safe.** Every valid opponent move gets a positive probability. So $P = 0$ means that *no* sequence of opponent moves leads to your loss, as long as you keep choosing minimum moves. That is exactly the "everyone teams up against me" guarantee. With 2 players, $P = 0$ is exactly the WIN label from section 4.
 
-**Why random opponents.** It's the simplest model that doesn't assume opponents coordinate, and it only matters when no safe move exists. When a safe move does exist, the agent always takes one.
+**Why random opponents.** It's the simplest model that doesn't assume opponents coordinate, and it only matters when no safe move exists. When a safe move does exist, the agent always takes one. A "careful opponents" model, where each opponent plays a safe move whenever it has one, was also tried. In 450 paired games it did slightly worse, mostly because it picked a worse opening letter at 6 players.
 
 ### Openings by number of players
 
@@ -153,7 +153,7 @@ The [Super Agent](../SuperAgent) estimates the same thing with *halting words*: 
 |---|---|---|
 | What it reasons about | Word lengths: which words you'd complete, plus words you'd be forced through as a prefix or suffix | Every reachable string and every move, exactly |
 | "Sure win" | BWR = 1, which was always safe in our tests but misses many safe moves | $P = 0$, which is exact: it finds every safe move |
-| How far ahead it looks | One opponent turn (the metagame step) | To the end of the game |
+| How far ahead it looks | Word lengths for all your future turns, plus one opponent turn in the metagame step | Every move to the end of the game |
 | Opponent model | The next player plays carefully | Opponents play random valid moves, used only when no move is safe |
 | With 2 players | An approximation | Perfect play |
 | Opening move | A fixed table built from the approximation | The exact best letter for the number of players |
@@ -167,21 +167,23 @@ Measured on 150 random positions for each player count:
 | 3 | 100% (163/163) | 54% (163/302) | 29 of 112 |
 | 6 | 100% (530/530) | 89% (530/593) | 1 of 130 |
 
-When the Super Agent says a move is a sure win, it's right. But with few players it misses many safe moves, and in about half of 2-player positions it can't find the win that exists. It falls back to an uncertain move and can lose a game it had already won. With more players the halting-word approximation gets close to exact, which is why the two agents differ less at big tables.
+When the Super Agent says a move is a sure win, it's right. But with few players it misses many safe moves: in about half of the 2-player positions that have a winning move (66 of 134), it can't find one. It falls back to an uncertain move and can lose a game it had already won. With more players the halting-word approximation gets close to exact, which is why the two agents differ less at big tables.
 
 The Super Agent's opening table is also only approximately right. Exact loss probabilities against random opponents:
 
 | Players | Super Agent's openings (average loss probability) | Exact best opening |
 |---|---|---|
 | 2 | I, O, U (I and O lose against a perfect opponent) | L or U (forced win) |
+| 3 | R (0.033) | R (0.033) |
 | 4 | G, J, K, M, T, W (0.135) | T (0.104) |
+| 5 | F, H, K, R (0.154) | T (0.124) |
 | 6 | D, S, T (0.159) | F (0.136) |
 | 7 | E, O, P, R, Y (0.186) | J (0.147) |
 | 8 | B, E, K, L, M, O, Y (0.172) | J (0.094) |
 
 ## 8. Limitations
 
-- **Seat luck.** With 3 or more players, you can be cornered before your first move, and no strategy avoids that. In one 6-player tournament, 12 of the Super Agent's 19 losses happened that way.
+- **Seat luck.** With 3 or more players, you can be cornered before your first move, and no strategy avoids that. In one 6-player tournament, 12 of the Super Agent's 19 losses happened that way. In a later tournament, 35 of the Game Tree Agent's 43 losses at 6- and 8-player tables did, and every one of its 43 losses came from a position where it had no safe move.
 - **The opponent model is simple.** When no move is safe, the agent assumes opponents play randomly. A model learned from how real opponents play, or a multi-player search such as max^n, could choose better in those positions.
 - **It assumes mistakes get caught.** The tree treats forming a word or a dead-end string as an immediate loss. It never bluffs on purpose, except when it's cornered.
 - **It's tied to the word list.** Changing the word list means rebuilding the tree, which takes about 25 s.
