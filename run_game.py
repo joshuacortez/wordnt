@@ -1,6 +1,6 @@
 import random
 from agents import SuperAgent, HumanAgent
-from agents import QuietFalcon, MistyLantern, CosmicPebble, VelvetComet, HumbleSprout
+from agents import QuietFalcon, AmberHeron, MistyLantern, CosmicPebble, VelvetComet, HumbleSprout
 from game_env import WordntEnv
 
 def main():
@@ -13,6 +13,7 @@ def main():
         # (HumanAgent, "Human E"),
         # bots from the 2020 Wordn't competition
         # (QuietFalcon, "Quiet Falcon"),
+        # (AmberHeron, "Amber Heron"),
         # (MistyLantern, "Misty Lantern"),
         # (CosmicPebble, "Cosmic Pebble"),
         # (VelvetComet, "Velvet Comet"),

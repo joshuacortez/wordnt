@@ -7,7 +7,7 @@ In `Wordn't`, players take turns extending a string by a letter at the start or 
 This repository contains a basic interface to play Wordn't and face the *Super Agent*, an intelligent bot perfectly designed for `Wordn't`! Can you beat the bot? 
 
 ## Quick Start
-After cloning the repo, install the dependencies (`pyahocorasick`, and `pandas` for the Quiet Falcon agent) via 
+After cloning the repo, install the dependencies (`pyahocorasick`, and `pandas` for the Quiet Falcon and Amber Heron agents) via 
 `pip install -r requirements.txt`
 Then run `run_game.py` to start playing!
 
@@ -37,6 +37,7 @@ The `agents` folder also includes bots submitted by other groups to a friendly W
 | Agent | Strategy |
 |---|---|
 | `QuietFalcon` | Prefers adding a letter to the start that minimizes the number of words 6 or 12 letters longer than the new string (tuned for 6 players), otherwise adds to the end the letter that leaves the fewest possible words. |
+| `AmberHeron` | A version of Quiet Falcon from the same group (the one entered in the competition's final lineup): it uses the actual number of players instead of 6, and scores adding to the start and to the end the same way. |
 | `MistyLantern` | Opens with the letter found in the fewest words, then picks the move that leaves the fewest possible words without forming one. |
 | `CosmicPebble` | Picks a random move that doesn't form a word, avoiding moves toward words 7, 13 or 19 letters longer than the current string (tuned for 6 players). |
 | `VelvetComet` | Precomputes, for every substring, the fewest letters needed to complete a word, then picks the shortest extension where that count isn't a multiple of the number of players, so someone else completes the word. |
