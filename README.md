@@ -37,7 +37,7 @@ Since Human A was proven wrong, they lose this game. This is just one way to end
 - A probability of 0 means you can never be forced to lose, even if all the other players team up against you. With 2 players, this is perfect play: the first player has a forced win by opening with **L** or **U**.
 - With 3 or more players, no opening letter is completely safe, so the agent picks the moves least likely to lose against opponents that don't coordinate.
 
-Building the game tree takes about 25 seconds and under 1 GB of memory; after that, every move is an instant lookup.
+Building the game tree takes about 25 seconds and under 1 GB of memory; after that, every move is an instant lookup. See [`agents/GameTreeAgent/README.md`](agents/GameTreeAgent/README.md) for the theory behind it and a comparison with the Super Agent.
 
 ## Other Agents
 The `agents` folder also includes bots submitted by other groups to a friendly Wordn't competition in 2020. They have been given neutral names, and they share the `WordntAgent` base class in `agents/base_agent.py` from the original game master.
