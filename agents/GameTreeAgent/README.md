@@ -12,7 +12,7 @@ Wordn't belongs to a family of games that game theory can solve completely:
 - **Finite, with no cycles.** Every move makes the string one letter longer, and no word is longer than 15 letters, so the game always ends and a position can never repeat.
 - **One loser per game.** Every game ends with someone forming a word, getting cornered, or losing a challenge.
 
-For two players, [Zermelo's theorem](https://en.wikipedia.org/wiki/Zermelo%27s_theorem_(game_theory)) says that in such a game one of the players has a strategy that wins no matter what the other does. You find it by **backward induction**: label the positions where the game ends, then work backwards one move at a time. Wordn't is a close relative of the word game [Ghost](https://en.wikipedia.org/wiki/Ghost_(game)) and its variant Superghost, where letters can also be added to either end, and the same technique applies to them.
+For two players, [Zermelo's theorem](https://en.wikipedia.org/wiki/Zermelo%27s_theorem_(game_theory)) says that in such a game one of the players has a strategy that wins no matter what the other does. You find it by **backward induction**: label the positions where the game ends, then work backwards one move at a time. Wordn't is a close relative of the word game [Superghost](https://en.wikipedia.org/wiki/Ghost_(game)#Variants), and this is the same technique used to analyse Ghost.
 
 ## 2. Positions and moves
 
