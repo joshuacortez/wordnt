@@ -1,11 +1,12 @@
 import random
-from agents import SuperAgent, HumanAgent
+from agents import SuperAgent, HumanAgent, GameTreeAgent
 from agents import QuietFalcon, AmberHeron, MistyLantern, CosmicPebble, VelvetComet, HumbleSprout
 from game_env import WordntEnv
 
 def main():
     players = [
         (SuperAgent,"Super Agent"),
+        # (GameTreeAgent, "Game Tree Agent"),
         (HumanAgent, "Human A"),
         (HumanAgent, "Human B"),
         # (HumanAgent, "Human C"),
