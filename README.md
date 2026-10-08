@@ -7,7 +7,7 @@ In `Wordn't`, players take turns extending a string by a letter at the start or 
 This repository contains a basic interface to play Wordn't and face the *Super Agent*, an intelligent bot perfectly designed for `Wordn't`! Can you beat the bot? 
 
 ## Quick Start
-After cloning the repo, install the `pyahocorasick` dependency via 
+After cloning the repo, install the dependencies (`pyahocorasick`, and `pandas` for the Quiet Falcon agent) via 
 `pip install -r requirements.txt`
 Then run `run_game.py` to start playing!
 
@@ -30,6 +30,19 @@ Then it's Human A's turn again. Instead of adding a letter to the start or end, 
 <img src = images/demo_game_3.png width = 75% height = 75% >
 
 Since Human A was proven wrong, they lose this game. This is just one way to end a round of `Wordn't`. It can also end when somebody challenges that the current substring is indeed a word.
+
+## Other Agents
+The `agents` folder also includes bots submitted by other groups to a friendly Wordn't competition in 2020. They have been given neutral names, and they share the `WordntAgent` base class in `agents/base_agent.py` from the original game master.
+
+| Agent | Strategy |
+|---|---|
+| `QuietFalcon` | Prefers adding a letter to the start that minimizes the number of words 6 or 12 letters longer than the new string (tuned for 6 players), otherwise adds to the end the letter that leaves the fewest possible words. |
+| `MistyLantern` | Opens with the letter found in the fewest words, then picks the move that leaves the fewest possible words without forming one. |
+| `CosmicPebble` | Picks a random move that doesn't form a word, avoiding moves toward words 7, 13 or 19 letters longer than the current string (tuned for 6 players). |
+| `VelvetComet` | Precomputes, for every substring, the fewest letters needed to complete a word, then picks the shortest extension where that count isn't a multiple of the number of players, so someone else completes the word. |
+| `HumbleSprout` | The competition's sample agent: builds toward a random word containing the string, without forming a word. A useful baseline. |
+
+To play against them, add them to the `players` list in `run_game.py`.
 
 ## Wordn't Bot Writeup
 For a more comprehensive explanation of the rules of `Wordn't` and the theory behind the Super Agent, take a look at `wordn't writeup.pdf`
