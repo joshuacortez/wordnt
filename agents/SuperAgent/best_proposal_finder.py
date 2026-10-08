@@ -148,7 +148,9 @@ def get_basis_words(current_string, n_players, max_word_len, words_set, letters)
     basis_words = [word for word in words_set if (len(word) > len(current_string) + 1)]
     
     # halt words are words that will force you to lose in any of your next turns
-    halt_words = [word for word in words_set if len(word) % (len(current_string) + n_players + 1) == 0]
+    # you add letter number len(current_string) + 1, then every n_players letters after that
+    player_position = len(current_string) + 1
+    halt_words = [word for word in words_set if len(word) % n_players == player_position % n_players]
     
     # generate all possible ways to add a letter (i.e. get proposal strings)
     proposal_strings = generate_proposal_strings(current_string, letters, words_set)
@@ -350,14 +352,14 @@ def compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_noh
         # nhir means nohalt_intersection_ratio
         
         # assume that opponent will choose among sure wins first, and if none exists, will chose among where basis word is nonzero
-        nhi_ratios_list = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr == 1]
-        
-        if not nhi_ratios_list:
+        opponent_nhi_ratios = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr == 1]
+
+        if not opponent_nhi_ratios:
             # assume that opponent will choose randomly among proposals where his basis word ratio is nonzero
-            nhi_ratios_list = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr != 0]
-        
-        if len(nhi_ratios_list) != 0:
-            nohalt_intersection_ratios[proposal] = sum(nhi_ratios_list)/len(nhi_ratios_list) 
+            opponent_nhi_ratios = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr != 0]
+
+        if len(opponent_nhi_ratios) != 0:
+            nohalt_intersection_ratios[proposal] = sum(opponent_nhi_ratios)/len(opponent_nhi_ratios)
 
     return nohalt_intersection_ratios
 
@@ -480,7 +482,12 @@ def find_best_proposal(current_string, n_players, max_word_len, words_set, lette
         nohalt_intersection_ratios = compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_nohalt_per_proposal, 
                                                                    n_players, max_word_len, words_set, letters)
         if nohalt_intersection_ratios:
-            best_proposal, best_ratio = optimize_ratio(nohalt_intersection_ratios, verbose = verbose)
+            nhi_proposal, nhi_ratio = optimize_ratio(nohalt_intersection_ratios, verbose = verbose)
+
+            # a zero NHI ratio for every proposal still leaves valid moves, so keep the basis word ratio proposal
+            # (challenging here would be a sure loss since the current string has basis words)
+            if nhi_proposal is not None:
+                best_proposal, best_ratio = nhi_proposal, nhi_ratio
 
     # challenge scenario
     # either you're dealt with an instant lose hand or the current_string is illegal
