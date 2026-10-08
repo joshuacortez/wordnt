@@ -142,15 +142,21 @@ def get_basis_words_per_proposal(proposal_strings, halt_words, basis_words, max_
     
     return basis_words_per_proposal, basis_words_nohalt_per_proposal
 
-def get_basis_words(current_string, n_players, max_word_len, words_set, letters):
-     
+def get_basis_words(current_string, n_players, max_word_len, words_set, letters, candidate_words = None):
+
+    # candidate_words narrows down the words to search through (defaults to the whole word list)
+    # every basis word or relevant halt word of a proposal contains current_string,
+    # so the basis words of current_string are enough candidates
+    if candidate_words is None:
+        candidate_words = words_set
+
     # basis words are words that you can still form towards when it's your turn
-    basis_words = [word for word in words_set if (len(word) > len(current_string) + 1)]
-    
+    basis_words = [word for word in candidate_words if (len(word) > len(current_string) + 1)]
+
     # halt words are words that will force you to lose in any of your next turns
     # you add letter number len(current_string) + 1, then every n_players letters after that
     player_position = len(current_string) + 1
-    halt_words = [word for word in words_set if len(word) % n_players == player_position % n_players]
+    halt_words = [word for word in candidate_words if len(word) % n_players == player_position % n_players]
     
     # generate all possible ways to add a letter (i.e. get proposal strings)
     proposal_strings = generate_proposal_strings(current_string, letters, words_set)
@@ -321,8 +327,10 @@ def compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_noh
 #        next_basis_words_nohalt = next_proposal_summary["best_proposal_basis_words_nohalt"]
         
         # getting the opponent's basis words
-        next_basis_words_per_proposal, next_basis_words_nohalt_per_proposal = get_basis_words(proposal, 
-                                                                                n_players, max_word_len, words_set, letters)
+        # the opponent's basis words all contain the proposal, so only search through the proposal's basis words
+        next_basis_words_per_proposal, next_basis_words_nohalt_per_proposal = get_basis_words(proposal,
+                                                                                n_players, max_word_len, words_set, letters,
+                                                                                candidate_words = basis_words_per_proposal[proposal])
         
         # calculate the basis word ratio metric
         # given a proposal string, this is the proportion of basis words that are nonhalting
@@ -479,7 +487,9 @@ def find_best_proposal(current_string, n_players, max_word_len, words_set, lette
         best_proposal = optimize_stall(basis_words_per_proposal)
         
     # if no sure scenario found, can use a metagame strategy
-    elif (best_ratio != 1) and use_metagame_strat:
+    # skipped for 2 players: your nonhalting words and the next player's have opposite length parity,
+    # so every NHI ratio is 0 and the basis word ratio proposal would be kept anyway
+    elif (best_ratio != 1) and use_metagame_strat and (n_players != 2):
         
         nohalt_intersection_ratios = compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_nohalt_per_proposal, 
                                                                    n_players, max_word_len, words_set, letters)
