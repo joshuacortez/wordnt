@@ -13,12 +13,14 @@ class Agent:
     def __init__(self, name, **kwargs):
         self.n_players = kwargs.get("n_players", 6)
         self.name = name
+        # how opponents are assumed to play when we have no safe move (see GameGraph.get_loss_probs)
+        self.opponent_model = kwargs.get("opponent_model", "random")
 
         words_file = kwargs.get("words_file", "./data/wordnt_words.txt")
         if words_file not in _GAME_GRAPHS:
             _GAME_GRAPHS[words_file] = GameGraph(words_file)
         self._graph = _GAME_GRAPHS[words_file]
-        self._graph.get_loss_probs(self.n_players)
+        self._graph.get_loss_probs(self.n_players, self.opponent_model)
 
     def __repr__(self):
         return self.name
@@ -74,9 +76,19 @@ class Agent:
                         return action_type, letter
             return "add_to_end", "S"
 
-        # after this move, it will be our turn again after n_players - 1 more letters
-        loss_probs = graph.get_loss_probs(self.n_players)[self.n_players - 1, children]
-        best_children = children[loss_probs <= loss_probs.min() + 1e-12]
+        # after this move, it will be our turn again after n_players - 1 more letters.
+        # a move with a random-model loss probability of 0 is safe: we can't be forced to lose
+        random_loss_probs = graph.get_loss_probs(self.n_players, "random")[self.n_players - 1, children]
+        best_children = children[random_loss_probs == 0]
+
+        # no safe move: pick the move least likely to lose under the opponent model,
+        # breaking ties with the random model (e.g. careful opponents always find the win with 2 players)
+        if len(best_children) == 0:
+            model_loss_probs = graph.get_loss_probs(self.n_players, self.opponent_model)[self.n_players - 1, children]
+            is_best = model_loss_probs <= model_loss_probs.min() + 1e-12
+            is_best &= random_loss_probs <= random_loss_probs[is_best].min() + 1e-12
+            best_children = children[is_best]
+
         new_string = graph.strings[random.choice(best_children)]
 
         if new_string[1:] == current_string:
