@@ -148,7 +148,9 @@ def get_basis_words(current_string, n_players, max_word_len, words_set, letters)
     basis_words = [word for word in words_set if (len(word) > len(current_string) + 1)]
     
     # halt words are words that will force you to lose in any of your next turns
-    halt_words = [word for word in words_set if len(word) % (len(current_string) + n_players + 1) == 0]
+    # you add letter number len(current_string) + 1, then every n_players letters after that
+    player_position = len(current_string) + 1
+    halt_words = [word for word in words_set if len(word) % n_players == player_position % n_players]
     
     # generate all possible ways to add a letter (i.e. get proposal strings)
     proposal_strings = generate_proposal_strings(current_string, letters, words_set)
@@ -350,14 +352,14 @@ def compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_noh
         # nhir means nohalt_intersection_ratio
         
         # assume that opponent will choose among sure wins first, and if none exists, will chose among where basis word is nonzero
-        nhi_ratios_list = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr == 1]
-        
-        if not nhi_ratios_list:
+        opponent_nhi_ratios = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr == 1]
+
+        if not opponent_nhi_ratios:
             # assume that opponent will choose randomly among proposals where his basis word ratio is nonzero
-            nhi_ratios_list = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr != 0]
-        
-        if len(nhi_ratios_list) != 0:
-            nohalt_intersection_ratios[proposal] = sum(nhi_ratios_list)/len(nhi_ratios_list) 
+            opponent_nhi_ratios = [nhir for (nbwr, nhir) in nhi_ratios_list if nbwr != 0]
+
+        if len(opponent_nhi_ratios) != 0:
+            nohalt_intersection_ratios[proposal] = sum(opponent_nhi_ratios)/len(opponent_nhi_ratios)
 
     return nohalt_intersection_ratios
 
@@ -366,32 +368,34 @@ def quick_first_turn(n_players, words_set, use_metagame_strat, verbose = VERBOSE
     
     if not use_metagame_strat:
         best_first_turn_dict = {
-                    2:{"proposals":["I", "U", "O"], "ratio":0.63},
-                    3:{"proposals":["X", "Z", "I"], "ratio":0.75},
-                    4:{"proposals":["I", "N", "O", "U", "X"], "ratio":0.78},
-                    5:{"proposals":["I", "X", "O"], "ratio":0.84},
-                    6:{"proposals":["I","O", "X"], "ratio":0.85},
-                    7:{"proposals":["Z"], "ratio":0.88},
+                    2:{"proposals":["I", "O", "U"], "ratio":0.47},
+                    3:{"proposals":["I", "X"], "ratio":0.66},
+                    4:{"proposals":["Z", "I", "N", "O", "U", "X"], "ratio":0.74},
+                    5:{"proposals":["I", "O", "X", "L", "N"], "ratio":0.81},
+                    6:{"proposals":["X", "O", "I", "Z", "N"], "ratio":0.83},
+                    7:{"proposals":["Z", "X"], "ratio":0.84},
                     8:{"proposals":["Z"], "ratio":0.86},
-                    9:{"proposals":["K"], "ratio":0.86},
-                    10:{"proposals":["J", "K", "W"], "ratio":0.91},
+                    9:{"proposals":["K"], "ratio":0.87},
+                    10:{"proposals":["K", "J", "W"], "ratio":0.92},
                     11:{"proposals":["K", "W"], "ratio":0.95},
                 }
         
     else:
         # ratios here are no halt intersection (NHI) ratios
         # this is assuming no halting word strategy for opponents (i.e. light metagame)
+        # for 2 players, NHI is always 0 (your nonhalting words and the next player's have opposite length parity),
+        # so it falls back to the basis word ratio proposals like find_best_proposal does
         best_first_turn_dict = {
-                    2:{"proposals":["T"], "ratio":1.0},
-                    3:{"proposals":["Y", "E", "R"], "ratio":1.0},
-                    4:{"proposals":["D", "M"], "ratio":1.0},
-                    5:{"proposals":["T", "R", "P"], "ratio":1.0},
-                    6:{"proposals":["D", "T","S"], "ratio":1.0},
-                    7:{"proposals":["Y", "O", "H", "E", "R", "P"], "ratio":1.0},
-                    8:{"proposals":["Y", "B", "O", "M", "E","L","K"], "ratio":1.0},
-                    9:{"proposals":["D", "B", "O", "S", "N", "E", "R"], "ratio":1.0},
-                    10:{"proposals":["A", "O", "E", "R", "L", "U"], "ratio":1.0},
-                    11:{"proposals":["D", "O", "N", "E", "R"], "ratio":1.0},
+                    2:{"proposals":["I", "O", "U"], "ratio":0.47},
+                    3:{"proposals":["R"], "ratio":1.0},
+                    4:{"proposals":["G", "J", "K", "M", "T", "W"], "ratio":1.0},
+                    5:{"proposals":["F", "H", "K", "R"], "ratio":1.0},
+                    6:{"proposals":["D", "S", "T"], "ratio":1.0},
+                    7:{"proposals":["E", "O", "P", "R", "Y"], "ratio":1.0},
+                    8:{"proposals":["B", "E", "K", "L", "M", "O", "Y"], "ratio":1.0},
+                    9:{"proposals":["B", "D", "E", "N", "O", "R", "S"], "ratio":1.0},
+                    10:{"proposals":["A", "E", "L", "O", "R", "U"], "ratio":1.0},
+                    11:{"proposals":["D", "E", "N", "O", "R"], "ratio":1.0},
                 }
     
     default_first_turn = {"proposals":["D"], "ratio":0.95}
@@ -480,7 +484,12 @@ def find_best_proposal(current_string, n_players, max_word_len, words_set, lette
         nohalt_intersection_ratios = compute_nohalt_intersection_ratios(basis_words_per_proposal, basis_words_nohalt_per_proposal, 
                                                                    n_players, max_word_len, words_set, letters)
         if nohalt_intersection_ratios:
-            best_proposal, best_ratio = optimize_ratio(nohalt_intersection_ratios, verbose = verbose)
+            nhi_proposal, nhi_ratio = optimize_ratio(nohalt_intersection_ratios, verbose = verbose)
+
+            # a zero NHI ratio for every proposal still leaves valid moves, so keep the basis word ratio proposal
+            # (challenging here would be a sure loss since the current string has basis words)
+            if nhi_proposal is not None:
+                best_proposal, best_ratio = nhi_proposal, nhi_ratio
 
     # challenge scenario
     # either you're dealt with an instant lose hand or the current_string is illegal
